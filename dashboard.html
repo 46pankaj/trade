@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Platform - Professional Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --dark-bg: #1a1a2e;
+            --darker-bg: #16213e;
+            --primary: #0f3460;
+            --secondary: #00b4d8;
+            --success: #06d6a0;
+            --danger: #ef476f;
+            --warning: #ffd166;
+            --text-light: #e6e6e6;
+            --text-muted: #b8b8b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .navbar {
+            background-color: var(--darker-bg) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card {
+            background-color: var(--darker-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            padding: 12px 20px;
+        }
+        
+        .table-dark {
+            background-color: var(--darker-bg);
+            color: var(--text-light);
+        }
+        
+        .table-dark th {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .table-dark td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .profit {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .loss {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .indicator-green {
+            background-color: var(--success);
+        }
+        
+        .indicator-red {
+            background-color: var(--danger);
+        }
+        
+        .indicator-yellow {
+            background-color: var(--warning);
+        }
+        
+        .signal-buy {
+            background-color: rgba(6, 214, 160, 0.2);
+            border-left: 3px solid var(--success);
+        }
+        
+        .signal-sell {
+            background-color: rgba(239, 71, 111, 0.2);
+            border-left: 3px solid var(--danger);
+        }
+        
+        .signal-hold {
+            background-color: rgba(255, 209, 102, 0.2);
+            border-left: 3px solid var(--warning);
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background-color: rgba(6, 214, 160, 0.2);
+            color: var(--success);
+        }
+        
+        .status-inactive {
+            background-color: rgba(239, 71, 111, 0.2);
+            color: var(--danger);
+        }
+        
+        .market-status {
+            display: flex;
+            align-items: center;
+        }
+        
+        .market-status-text {
+            margin-left: 8px;
+            font-weight: 600;
+        }
+        
+        .market-open {
+            color: var(--success);
+        }
+        
+        .market-closed {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-robot me-2"></i>
+                AI Trading Platform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-graph-up me-1"></i> Analytics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-journal-text me-1"></i> Strategies</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-gear me-1"></i> Settings</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div class="market-status me-3">
+                        <div class="indicator indicator-green"></div>
+                        <div class="market-status-text market-open">Market Open</div>
+                    </div>
+                    <div class="text-muted me-3" id="current-time">09:15:23 AM</div>
+                    <button class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-person-circle me-1"></i> Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Chart Section -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-graph-up me-2"></i>NIFTY 50 - Live Chart</span>
+                        <div>
+                            <select class="form-select form-select-sm d-inline-block w-auto me-2">
+                                <option>1 min</option>
+                                <option>5 min</option>
+                                <option selected>15 min</option>
+                                <option>30 min</option>
+                                <option>1 hour</option>
+                                <option>1 day</option>
+                            </select>
+                            <select class="form-select form-select-sm d-inline-block w-auto">
+                                <option>Candlestick</option>
+                                <option selected>Line</option>
+                                <option>Heikin Ashi</option>
+                                <option>Area</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:400px;">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trading Signals -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-lightning-charge me-2"></i>Latest Trading Signals
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Symbol</th>
+                                        <th>Signal</th>
+                                        <th>Confidence</th>
+                                        <th>Price</th>
+                                        <th>Predicted</th>
+                                        <th>RSI</th>
+                                        <th>MACD</th>
+                                        <th>Sentiment</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="signalsBody">
+                                    <!-- Filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                <!-- Trading Controls -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-controller me-2"></i>Trading Controls
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h6 class="mb-1">Auto Trading</h6>
+                                <span id="autoTradingStatus" class="status-badge status-inactive">INACTIVE</span>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoTradingSwitch">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Risk per Trade</label>
+                            <input type="range" class="form-range" min="500" max="5000" step="500" id="riskPerTrade" value="1000">
+                            <div class="d-flex justify-content-between">
+                                <small>₹500</small>
+                                <small id="riskValue">₹1000</small>
+                                <small>₹5000</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Daily Loss Limit</label>
+                            <input type="range" class="form-range" min="1000" max="10000" step="1000" id="dailyLossLimit" value="5000">
+                            <div class="d-flex justify-content-between">
+                                <small>₹1000</small>
+                                <small id="lossLimitValue">₹5000</small>
+                                <small>₹10000</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-danger" id="emergencyStop">
+                                <i class="bi bi-exclamation-octagon me-1"></i> Emergency Stop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Trading -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-hand-index-thumb me-2"></i>Manual Trading
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Symbol</label>
+                            <select class="form-select" id="manualSymbol">
+                                <option value="NIFTY">NIFTY 50</option>
+                                <option value="BANKNIFTY">BANK NIFTY</option>
+                                <option value="SENSEX">SENSEX</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Option Type</label>
+                            <div class="d-grid gap-2">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-success" id="buyCallBtn">
+                                        <i class="bi bi-arrow-up-circle me-1"></i> Buy Call
+                                    </button>
+                                    <button type="button" class="btn btn-danger" id="buyPutBtn">
+                                        <i class="bi bi-arrow-down-circle me-1"></i> Buy Put
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="tradeQuantity" value="1" min="1">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" id="placeManualTrade">
+                                <i class="bi bi-cash-stack me-1"></i> Place Trade
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-wallet2 me-2"></i>Account Summary
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Available Margin:</span>
+                            <strong>₹78,452.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Utilized Margin:</span>
+                            <strong>₹21,548.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Today's P&L:</span>
+                            <strong class="profit">+₹3,245.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Open Positions:</span>
+                            <strong>3</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Today's Trades:</span>
+                            <strong>7</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="row">
+            <!-- Open Positions -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-clock-history me-2"></i>Open Positions
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Type</th>
+                                        <th>Qty</th>
+                                        <th>Entry</th>
+                                        <th>LTP</th>
+                                        <th>P&L</th>
+                                        <th>SL</th>
+                                        <th>TP</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="positionsBody">
+                                    <!-- Filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trade History -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-list-check me-2"></i>Today's Trade History
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Symbol</th>
+                                        <th>Type</th>
+                                        <th>Qty</th>
+                                        <th>Entry</th>
+                                        <th>Exit</th>
+                                        <th>P&L</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyBody">
+                                    <!-- Filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize charts
+        function initializeCharts() {
+            // Price Chart
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            const priceChart = new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'NIFTY 50',
+                        data: generateRandomPriceData(100),
+                        borderColor: '#00b4d8',
+                        backgroundColor: 'rgba(0, 180, 216, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                    plugins: {
+                        zoom: {
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy',
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+
+            // Add annotations for signals
+            addSignalAnnotations(priceChart);
+        }
+
+        // Generate random price data for demo
+        function generateRandomPriceData(count) {
+            const data = [];
+            let price = 18000;
+            const now = new Date();
+            
+            for (let i = count; i > 0; i--) {
+                const date = new Date(now.getTime() - (i * 60000));
+                price += (Math.random() - 0.5) * 20;
+                data.push({
+                    x: date,
+                    y: Math.round(price)
+                });
+            }
+            return data;
+        }
+
+        // Add signal annotations to chart
+        function addSignalAnnotations(chart) {
+            const annotations = [];
+            const data = chart.data.datasets[0].data;
+            
+            // Add some random signals for demo
+            for (let i = 0; i < data.length; i += 15) {
+                const isBuy = Math.random() > 0.5;
+                annotations.push({
+                    type: 'line',
+                    mode: 'vertical',
+                    scaleID: 'x',
+                    value: data[i].x,
+                    borderColor: isBuy ? '#06d6a0' : '#ef476f',
+                    borderWidth: 2,
+                    label: {
+                        content: isBuy ? 'BUY' : 'SELL',
+                        enabled: true,
+                        position: 'top',
+                        backgroundColor: isBuy ? '#06d6a0' : '#ef476f'
+                    }
+                });
+            }
+            
+            chart.options.plugins.annotation = { annotations };
+            chart.update();
+        }
+
+        // Update UI with data
+        function updateDashboard() {
+            // Simulate fetching data from server
+            setTimeout(() => {
+                // Update signals table
+                const signals = [
+                    {
+                        time: '09:15:23',
+                        symbol: 'NIFTY',
+                        signal: 'BUY',
+                        confidence: '85%',
+                        price: '18,245.30',
+                        predicted: '18,320.50 (+0.4%)',
+                        rsi: '62',
+                        macd: '↑ Bullish',
+                        sentiment: '72% Positive',
+                        action: 'CALL 18200CE'
+                    },
+                    {
+                        time: '09:30:45',
+                        symbol: 'BANKNIFTY',
+                        signal: 'SELL',
+                        confidence: '78%',
+                        price: '39,876.20',
+                        predicted: '39,540.10 (-0.8%)',
+                        rsi: '71',
+                        macd: '↓ Bearish',
+                        sentiment: '64% Negative',
+                        action: 'PUT 39800PE'
+                    },
+                    {
+                        time: '10:05:12',
+                        symbol: 'NIFTY',
+                        signal: 'HOLD',
+                        confidence: '65%',
+                        price: '18,210.75',
+                        predicted: '18,195.30 (-0.1%)',
+                        rsi: '55',
+                        macd: '→ Neutral',
+                        sentiment: '51% Neutral',
+                        action: 'No Action'
+                    }
+                ];
+                
+                let signalsHtml = '';
+                signals.forEach(s => {
+                    const signalClass = s.signal === 'BUY' ? 'signal-buy' : 
+                                      s.signal === 'SELL' ? 'signal-sell' : 'signal-hold';
+                    signalsHtml += `
+                        <tr class="${signalClass}">
+                            <td>${s.time}</td>
+                            <td>${s.symbol}</td>
+                            <td><strong>${s.signal}</strong></td>
+                            <td>${s.confidence}</td>
+                            <td>${s.price}</td>
+                            <td>${s.predicted}</td>
+                            <td>${s.rsi}</td>
+                            <td>${s.macd}</td>
+                            <td>${s.sentiment}</td>
+                            <td>${s.action}</td>
+                        </tr>
+                    `;
+                });
+                $('#signalsBody').html(signalsHtml);
+                
+                // Update positions table
+                const positions = [
+                    {
+                        symbol: 'NIFTY22SEP18200CE',
+                        type: 'CE',
+                        qty: 75,
+                        entry: '₹120.50',
+                        ltp: '₹145.75',
+                        pnl: '+₹1,893.75',
+                        sl: '₹95.00',
+                        tp: '₹180.00',
+                        action: 'Trailing'
+                    },
+                    {
+                        symbol: 'BANKNIFTY22SEP39800PE',
+                        type: 'PE',
+                        qty: 50,
+                        entry: '₹85.25',
+                        ltp: '₹92.40',
+                        pnl: '+₹357.50',
+                        sl: '₹70.00',
+                        tp: '₹120.00',
+                        action: 'Active'
+                    },
+                    {
+                        symbol: 'NIFTY22SEP18000PE',
+                        type: 'PE',
+                        qty: 25,
+                        entry: '₹65.80',
+                        ltp: '₹58.20',
+                        pnl: '-₹190.00',
+                        sl: '₹55.00',
+                        tp: '₹90.00',
+                        action: 'Active'
+                    }
+                ];
+                
+                let positionsHtml = '';
+                positions.forEach(p => {
+                    const pnlClass = p.pnl.startsWith('+') ? 'profit' : 'loss';
+                    positionsHtml += `
+                        <tr>
+                            <td>${p.symbol}</td>
+                            <td>${p.type}</td>
+                            <td>${p.qty}</td>
+                            <td>${p.entry}</td>
+                            <td>${p.ltp}</td>
+                            <td class="${pnlClass}">${p.pnl}</td>
+                            <td>${p.sl}</td>
+                            <td>${p.tp}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-light">Close</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $('#positionsBody').html(positionsHtml);
+                
+                // Update history table
+                const history = [
+                    {
+                        time: '09:15:45',
+                        symbol: 'NIFTY22SEP18200CE',
+                        type: 'BUY CE',
+                        qty: 75,
+                        entry: '₹120.50',
+                        exit: '',
+                        pnl: ''
+                    },
+                    {
+                        time: '09:20:30',
+                        symbol: 'BANKNIFTY22SEP39800PE',
+                        type: 'BUY PE',
+                        qty: 50,
+                        entry: '₹85.25',
+                        exit: '',
+                        pnl: ''
+                    },
+                    {
+                        time: '09:45:15',
+                        symbol: 'NIFTY22SEP18000PE',
+                        type: 'BUY PE',
+                        qty: 25,
+                        entry: '₹65.80',
+                        exit: '',
+                        pnl: ''
+                    },
+                    {
+                        time: '10:30:22',
+                        symbol: 'NIFTY22SEP18100CE',
+                        type: 'SELL CE',
+                        qty: 50,
+                        entry: '₹92.40',
+                        exit: '₹105.75',
+                        pnl: '+₹667.50'
+                    }
+                ];
+                
+                let historyHtml = '';
+                history.forEach(h => {
+                    const pnlClass = h.pnl.startsWith('+') ? 'profit' : 
+                                    h.pnl.startsWith('-') ? 'loss' : '';
+                    historyHtml += `
+                        <tr>
+                            <td>${h.time}</td>
+                            <td>${h.symbol}</td>
+                            <td>${h.type}</td>
+                            <td>${h.qty}</td>
+                            <td>${h.entry}</td>
+                            <td>${h.exit || '-'}</td>
+                            <td class="${pnlClass}">${h.pnl || '-'}</td>
+                        </tr>
+                    `;
+                });
+                $('#historyBody').html(historyHtml);
+                
+                // Update current time
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour12: true });
+                $('#current-time').text(timeStr);
+            }, 500);
+        }
+
+        // Event handlers
+        $(document).ready(function() {
+            initializeCharts();
+            
+            // Update dashboard every 5 seconds
+            updateDashboard();
+            setInterval(updateDashboard, 5000);
+            
+            // Auto trading switch
+            $('#autoTradingSwitch').change(function() {
+                const isChecked = $(this).is(':checked');
+                const statusBadge = $('#autoTradingStatus');
+                
+                if (isChecked) {
+                    statusBadge.removeClass('status-inactive').addClass('status-active').text('ACTIVE');
+                    // In real app, call API to enable auto trading
+                } else {
+                    statusBadge.removeClass('status-active').addClass('status-inactive').text('INACTIVE');
+                    // In real app, call API to disable auto trading
+                }
+            });
+            
+            // Risk per trade slider
+            $('#riskPerTrade').on('input', function() {
+                $('#riskValue').text('₹' + $(this).val());
+            });
+            
+            // Daily loss limit slider
+            $('#dailyLossLimit').on('input', function() {
+                $('#lossLimitValue').text('₹' + $(this).val());
+            });
+            
+            // Emergency stop button
+            $('#emergencyStop').click(function() {
+                if (confirm('Are you sure you want to stop all trading immediately?')) {
+                    $('#autoTradingSwitch').prop('checked', false).trigger('change');
+                    // In real app, call API to cancel all orders and positions
+                    alert('All trading activity has been stopped. Open positions will be closed.');
+                }
+            });
+            
+            // Manual trade buttons
+            $('#buyCallBtn').click(function() {
+                $('#manualSymbol').val('NIFTY');
+                $('#tradeQuantity').val(50);
+            });
+            
+            $('#buyPutBtn').click(function() {
+                $('#manualSymbol').val('BANKNIFTY');
+                $('#tradeQuantity').val(25);
+            });
+            
+            $('#placeManualTrade').click(function() {
+                const symbol = $('#manualSymbol').val();
+                const quantity = $('#tradeQuantity').val();
+                
+                if (!quantity || quantity < 1) {
+                    alert('Please enter a valid quantity');
+                    return;
+                }
+                
+                if (confirm(`Place manual trade for ${quantity} lots of ${symbol} options?`)) {
+                    // In real app, call API to place manual trade
+                    alert(`Trade placed for ${quantity} lots of ${symbol}`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
